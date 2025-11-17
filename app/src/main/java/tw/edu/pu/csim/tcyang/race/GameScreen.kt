@@ -5,8 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -17,8 +20,10 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel // 引入 ViewModel 相關函式
+import kotlinx.coroutines.delay
 
 @Composable
 fun GameScreen(
@@ -42,6 +47,8 @@ fun GameScreen(
     )
 
 
+
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color.Yellow)
@@ -63,7 +70,20 @@ fun GameScreen(
                 color = Color.Black,
                 fontSize = 40.sp,
                 modifier = Modifier.align(Alignment.Center) // 將文字置於中央
+
             )
+        }
+        if (!gameRunning) {
+            Button(
+                onClick = {
+                    gameViewModel.startGame()
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 80.dp)
+            ) {
+                Text("遊戲開始")
+            }
         }
     }
 
@@ -98,14 +118,7 @@ fun GameScreen(
                 ),
                 dstSize = IntSize(200, 200) // 馬匹圖片大小
             )
-        }
 
-        // 🚩 繪製終點線
-        drawLine(
-            color = Color.Black,
-            start = Offset(gameViewModel.screenWidthPx - 200, 0f),
-            end = Offset(gameViewModel.screenWidthPx - 200, gameViewModel.screenHeightPx),
-            strokeWidth = 10f
-        )
+        }
     }
 }

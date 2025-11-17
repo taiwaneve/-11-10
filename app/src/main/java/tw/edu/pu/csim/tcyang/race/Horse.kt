@@ -1,14 +1,16 @@
 package tw.edu.pu.csim.tcyang.race
 
-class Horse(n: Int) {
-    var horseX = 0
-    var horseY = 100 + 220 * n
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import kotlin.random.Random
 
-    var number = 0
+class Horse(val number: Int, trackY: Float) {
+    var horseX by mutableIntStateOf(0)
+    var horseY by mutableIntStateOf(trackY.toInt())
 
-    fun HorseRun(){
-        number ++
-        if (number>3) {number = 0}
-        horseX += (10..30).random()
+    fun run() {
+        horseX += Random.nextInt(5, 20)
     }
 }
+
