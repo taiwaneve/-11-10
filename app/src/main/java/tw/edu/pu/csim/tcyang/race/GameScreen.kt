@@ -22,57 +22,93 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // 引入 ViewModel 相關函式
-import kotlinx.coroutines.delay
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun GameScreen(
     message: String,
     gameViewModel: GameViewModel = viewModel()
 ) {
-    // ... 保持現有的狀態讀取 ...
+    // 讀取狀態
     val circleX = gameViewModel.circleX
     val circleY = gameViewModel.circleY
     val gameRunning = gameViewModel.gameRunning
-    // 🚩 新增：讀取勝利者狀態
     val winner = gameViewModel.winner
+    val screenWidth = gameViewModel.screenWidthPx
 
-    // 載入圖片 (假設 R.drawable.horse3 存在，如果不存在請將此行刪除)
+    // 載入圖片
     val imageBitmaps = listOf(
         ImageBitmap.imageResource(R.drawable.horse0),
         ImageBitmap.imageResource(R.drawable.horse1),
         ImageBitmap.imageResource(R.drawable.horse2),
-        // 🚩 假設第四張圖 (用於圓圈或額外用途，如果沒有請移除)
         ImageBitmap.imageResource(R.drawable.horse3)
     )
 
-
+    // 使用 LaunchedEffect 處理首次啟動 (保持不變)
+    LaunchedEffect(screenWidth) {
+        if (screenWidth > 0f && !gameRunning) {
+            gameViewModel.startGame()
+        }
+    }
 
 
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color.Yellow)
-        // 使用 onSizeChanged 設定遊戲尺寸，並在尺寸確定後啟動遊戲
         .onSizeChanged { size ->
             gameViewModel.setGameSize(size.width.toFloat(), size.height.toFloat())
-            if (!gameRunning) {
-                gameViewModel.startGame()
-            }
         }
     ){
-        // 🚩 修正：顯示作者名稱
+        // 🚩 修正 1: 將 Canvas 移到 Box 內部，並放在 UI 元素之前
+        Canvas (modifier = Modifier
+            .fillMaxSize()
+            // 處理圓圈拖曳手勢
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    gameViewModel.MoveCircle(dragAmount.x, dragAmount.y)
+                }
+
+            }
+        )
+        {
+            // 繪製圓圈
+            drawCircle(
+                color = Color.Red,
+                radius = 100f,
+                center = Offset(circleX, circleY)
+            )
+
+            // 繪製馬匹
+            gameViewModel.horses.forEach { horse ->
+                drawImage(
+                    image = imageBitmaps[horse.number],
+                    dstOffset = IntOffset(
+                        horse.horseX,
+                        horse.horseY
+                    ),
+                    dstSize = IntSize(200, 200)
+                )
+
+            }
+        }
+
+        // 🚩 修正 2: UI 元素 (Text 和 Button) 放在 Canvas 之後，確保它們疊在最上層
+
+        // 顯示作者名稱
         Text(text = message)
 
-        // 🚩 新增：顯示勝利者訊息
+        // 顯示勝利者訊息
         if (winner != null) {
             Text(
                 text = "第 $winner 馬獲勝",
                 color = Color.Black,
                 fontSize = 40.sp,
-                modifier = Modifier.align(Alignment.Center) // 將文字置於中央
-
+                modifier = Modifier.align(Alignment.Center)
             )
         }
+
+        // 遊戲暫停或結束時顯示按鈕
         if (!gameRunning) {
             Button(
                 onClick = {
@@ -84,41 +120,6 @@ fun GameScreen(
             ) {
                 Text("遊戲開始")
             }
-        }
-    }
-
-    Canvas (modifier = Modifier
-        .fillMaxSize()
-        // 呼叫 ViewModel 實例的方法
-        .pointerInput(Unit) {
-            detectDragGestures { change, dragAmount ->
-                change.consume()
-                gameViewModel.MoveCircle(dragAmount.x, dragAmount.y)
-            }
-
-        }
-
-    )
-    {
-        // 繪製圓圈 (保持不變，它用於您的拖曳測試，與賽馬無關)
-        drawCircle(
-            color = Color.Red,
-            radius = 100f,
-            center = Offset(circleX, circleY)
-        )
-
-        // 🚩 繪製三匹馬
-        // 繪製馬匹，並使用 ViewModel 中馬匹的座標
-        gameViewModel.horses.forEach { horse ->
-            drawImage(
-                image = imageBitmaps[horse.number],
-                dstOffset = IntOffset(
-                    horse.horseX,
-                    horse.horseY
-                ),
-                dstSize = IntSize(200, 200) // 馬匹圖片大小
-            )
-
         }
     }
 }
